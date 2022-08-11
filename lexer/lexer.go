@@ -104,13 +104,13 @@ func (l *Lexer) NextToken() token.Token {
 	case ';':
 		tok = newToken(token.SEMICOLON, l.ch)
 	case '.':
-    if l.isPartOfNumber(l.ch) {
-      tok = token.Token{}
+		if l.isPartOfNumber(l.ch) {
+			tok = token.Token{}
 			tok.Literal = l.readNumber()
 			tok.Type = token.LookupNumericIdentifier(tok.Literal)
-    } else {
-		tok = newToken(token.DOT, l.ch)
-    }
+		} else {
+			tok = newToken(token.DOT, l.ch)
+		}
 	case '+':
 		tok = newToken(token.PLUS, l.ch)
 	case '=':
