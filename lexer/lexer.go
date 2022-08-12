@@ -173,6 +173,8 @@ func (l *Lexer) NextToken() token.Token {
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF
+    tok.Line = l.currentLine
+    tok.Column = l.currentColumn
 	default:
 		if isLetter(l.ch) {
 			tok.Literal = l.readIdentifier()
