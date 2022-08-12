@@ -5,14 +5,16 @@ import (
 )
 
 type Lexer struct {
-	input        string
-	position     int  // current position in the input
-	readPosition int  // current reading position in input
-	ch           byte // current char under examination
+	input         string
+	position      int  // current position in the input
+	readPosition  int  // current reading position in input
+	ch            byte // current char under examination
+	currentLine   int  // current line in input
+	currentColumn int  // current postion on the line
 }
 
-func newToken(tokenType token.TokenType, ch byte) token.Token {
-	return token.Token{Type: tokenType, Literal: string(ch)}
+func newToken(tokenType token.TokenType, ch byte, line, col int) token.Token {
+	return token.Token{Type: tokenType, Literal: string(ch), Line: line, Column: col}
 }
 
 func isLetter(ch byte) bool {
@@ -20,7 +22,7 @@ func isLetter(ch byte) bool {
 }
 
 func New(input string) *Lexer {
-	l := &Lexer{input: input}
+	l := &Lexer{input: input, currentLine: 1, currentColumn: 0}
 
 	l.readChar()
 
@@ -32,6 +34,14 @@ func (l *Lexer) readChar() {
 		l.ch = 0
 	} else {
 		l.ch = l.input[l.readPosition]
+	}
+
+	switch l.ch {
+	case '\n':
+		l.currentLine += 1
+		l.currentColumn = 0
+	default:
+		l.currentColumn += 1
 	}
 
 	l.position = l.readPosition
@@ -93,70 +103,72 @@ func (l *Lexer) NextToken() token.Token {
 
 	switch l.ch {
 	case '(':
-		tok = newToken(token.LPAREN, l.ch)
+		tok = newToken(token.LPAREN, l.ch, l.currentLine, l.currentColumn)
 	case ')':
-		tok = newToken(token.RPAREN, l.ch)
+		tok = newToken(token.RPAREN, l.ch, l.currentLine, l.currentColumn)
 	case '{':
-		tok = newToken(token.LBRACE, l.ch)
+		tok = newToken(token.LBRACE, l.ch, l.currentLine, l.currentColumn)
 	case '}':
-		tok = newToken(token.RBRACE, l.ch)
+		tok = newToken(token.RBRACE, l.ch, l.currentLine, l.currentColumn)
 	case ',':
-		tok = newToken(token.COMMA, l.ch)
+		tok = newToken(token.COMMA, l.ch, l.currentLine, l.currentColumn)
 	case ';':
-		tok = newToken(token.SEMICOLON, l.ch)
+		tok = newToken(token.SEMICOLON, l.ch, l.currentLine, l.currentColumn)
 	case '.':
 		if l.isPartOfNumber(l.ch) {
 			tok = token.Token{}
 			tok.Literal = l.readNumber()
 			tok.Type = token.LookupNumericIdentifier(tok.Literal)
+			tok.Line = l.currentLine
+			tok.Column = l.currentColumn - 1
 
 			return tok
 		} else {
-			tok = newToken(token.DOT, l.ch)
+			tok = newToken(token.DOT, l.ch, l.currentLine, l.currentColumn)
 		}
 	case '+':
-		tok = newToken(token.PLUS, l.ch)
+		tok = newToken(token.PLUS, l.ch, l.currentLine, l.currentColumn)
 	case '=':
 		if l.peakAhead() == '=' {
 			ch := l.ch
 			l.readChar()
 			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.EQ, Literal: literal}
+			tok = token.Token{Type: token.EQ, Literal: literal, Line: l.currentLine, Column: l.currentColumn}
 		} else {
-			tok = newToken(token.ASSIGN, l.ch)
+			tok = newToken(token.ASSIGN, l.ch, l.currentLine, l.currentColumn)
 		}
 	case '-':
-		tok = newToken(token.MINUS, l.ch)
+		tok = newToken(token.MINUS, l.ch, l.currentLine, l.currentColumn)
 	case '!':
 		if l.peakAhead() == '=' {
 			ch := l.ch
 			l.readChar()
 			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.NOT_EQ, Literal: literal}
+			tok = token.Token{Type: token.NOT_EQ, Literal: literal, Line: l.currentLine, Column: l.currentColumn}
 		} else {
-			tok = newToken(token.BANG, l.ch)
+			tok = newToken(token.BANG, l.ch, l.currentLine, l.currentColumn)
 		}
 	case '*':
-		tok = newToken(token.ASTERISK, l.ch)
+		tok = newToken(token.ASTERISK, l.ch, l.currentLine, l.currentColumn)
 	case '/':
-		tok = newToken(token.SLASH, l.ch)
+		tok = newToken(token.SLASH, l.ch, l.currentLine, l.currentColumn)
 	case '<':
 		if l.peakAhead() == '=' {
 			ch := l.ch
 			l.readChar()
 			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.LT_EQ, Literal: literal}
+			tok = token.Token{Type: token.LT_EQ, Literal: literal, Line: l.currentLine, Column: l.currentColumn}
 		} else {
-			tok = newToken(token.LT, l.ch)
+			tok = newToken(token.LT, l.ch, l.currentLine, l.currentColumn)
 		}
 	case '>':
 		if l.peakAhead() == '=' {
 			ch := l.ch
 			l.readChar()
 			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.GT_EQ, Literal: literal}
+			tok = token.Token{Type: token.GT_EQ, Literal: literal, Line: l.currentLine, Column: l.currentColumn}
 		} else {
-			tok = newToken(token.GT, l.ch)
+			tok = newToken(token.GT, l.ch, l.currentLine, l.currentColumn)
 		}
 	case 0:
 		tok.Literal = ""
@@ -165,15 +177,19 @@ func (l *Lexer) NextToken() token.Token {
 		if isLetter(l.ch) {
 			tok.Literal = l.readIdentifier()
 			tok.Type = token.LookupIdentifier(tok.Literal)
+			tok.Line = l.currentLine
+			tok.Column = l.currentColumn - 1
 
 			return tok
 		} else if isDigit(l.ch) {
 			tok.Literal = l.readNumber()
 			tok.Type = token.LookupNumericIdentifier(tok.Literal)
+			tok.Line = l.currentLine
+			tok.Column = l.currentColumn - 1
 
 			return tok
 		} else {
-			tok = newToken(token.ILEGAL, l.ch)
+			tok = newToken(token.ILEGAL, l.ch, l.currentLine, l.currentColumn)
 		}
 	}
 
