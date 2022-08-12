@@ -53,6 +53,7 @@ func isDigit(ch byte) bool {
 func (l *Lexer) isPartOfNumber(ch byte) bool {
 	ahead := l.peakAhead()
 	behind := l.peakBack()
+
 	return isDigit(ch) || ch == '.' && (ahead != 0 && isDigit(ahead) || behind != 0 && isDigit(behind))
 }
 
@@ -108,6 +109,8 @@ func (l *Lexer) NextToken() token.Token {
 			tok = token.Token{}
 			tok.Literal = l.readNumber()
 			tok.Type = token.LookupNumericIdentifier(tok.Literal)
+
+			return tok
 		} else {
 			tok = newToken(token.DOT, l.ch)
 		}
@@ -167,6 +170,7 @@ func (l *Lexer) NextToken() token.Token {
 		} else if isDigit(l.ch) {
 			tok.Literal = l.readNumber()
 			tok.Type = token.LookupNumericIdentifier(tok.Literal)
+
 			return tok
 		} else {
 			tok = newToken(token.ILEGAL, l.ch)
