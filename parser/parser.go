@@ -9,10 +9,14 @@ import (
 )
 
 type Parser struct {
-	l         *lexer.Lexer
-	errors    []string
+	l      *lexer.Lexer
+	errors []string
+
 	curToken  token.Token
 	peekToken token.Token
+
+	prefixParseFns map[token.TokenType]prefixParserFn
+	infixParseFns  map[token.TokenType]infixParserFn
 }
 
 func New(l *lexer.Lexer) *Parser {
@@ -21,6 +25,14 @@ func New(l *lexer.Lexer) *Parser {
 	// read two tokens so curToken and peekToken are populated
 	p.nextToken()
 	p.nextToken()
+
+  p.prefixParseFns = make(map[token.TokenType]prefixParserFn)
+
+  p.registerPrefix(token.IDENT, p.parseIdentifier)
+  p.registerPrefix(token.INT, p.parseIntegerLiteral)
+  p.registerPrefix(token.FLOAT, p.parseFloatLiteral)
+  p.registerPrefix(token.BANG, p.parsePrefixExpression)
+  p.registerPrefix(token.MINUS, p.parsePrefixExpression)
 
 	return p
 }
@@ -33,6 +45,12 @@ func (p *Parser) peekError(t token.TokenType) {
 	msg := fmt.Sprintf("expected next token to be %s, got %s instead at line %d, column %d", t, p.peekToken.Type, p.peekToken.Line, p.peekToken.Column)
 
 	p.errors = append(p.errors, msg)
+}
+
+func (p *Parser) noPrefixParseFnError(t token.TokenType) {
+  msg := fmt.Sprintf("no prefix parse function for %s found", t)
+
+  p.errors = append(p.errors, msg)
 }
 
 func (p *Parser) nextToken() {
@@ -91,6 +109,26 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	return stmt
 }
 
+func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParserFn) {
+	p.prefixParseFns[tokenType] = fn
+}
+
+func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParserFn) {
+	p.infixParseFns[tokenType] = fn
+}
+
+func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+	stmt := &ast.ExpressionStatement{Token: p.curToken}
+
+	stmt.Expression = p.parseExpression(LOWEST)
+
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+
+	return stmt
+}
+
 func (p *Parser) parseStatement() ast.Statement {
 	switch p.curToken.Type {
 	case token.LET:
@@ -98,7 +136,7 @@ func (p *Parser) parseStatement() ast.Statement {
 	case token.RETURN:
 		return p.parseReturnStatement()
 	default:
-		return nil
+		return p.parseExpressionStatement()
 	}
 }
 
