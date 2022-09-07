@@ -6,6 +6,7 @@ import (
 
 	"github.com/cupsadarius/monkey_interpreter/ast"
 	"github.com/cupsadarius/monkey_interpreter/token"
+	"github.com/cupsadarius/monkey_interpreter/utils"
 )
 
 type (
@@ -53,36 +54,14 @@ func (p *Parser) curPrecedence() int {
 	return LOWEST
 }
 
-func (p *Parser) parseExpression(precedence int) ast.Expression {
-	prefix := p.prefixParseFns[p.curToken.Type]
-
-	if prefix == nil {
-		p.noPrefixParseFnError(p.curToken.Type)
-		return nil
-	}
-
-	leftExp := prefix()
-
-  for !p.peekTokenIs(token.SEMICOLON) && precedence < p.peekPrecedence() {
-    infix := p.infixParseFns[p.peekToken.Type]
-
-    if infix == nil {
-    return nil
-    }
-
-    p.nextToken()
-
-    leftExp = infix(leftExp)
-  }
-
-	return leftExp
-}
-
 func (p *Parser) parseIdentifier() ast.Expression {
+  defer utils.UnTrace(utils.Trace("parseIdentifier"))
+
 	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 }
 
 func (p *Parser) parseIntegerLiteral() ast.Expression {
+  defer utils.UnTrace(utils.Trace("parseIntegerLiteral"))
 	lit := &ast.IntegerLiteral{Token: p.curToken}
 
 	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
@@ -99,6 +78,8 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 }
 
 func (p *Parser) parseFloatLiteral() ast.Expression {
+	defer utils.UnTrace(utils.Trace("parseFloatLiteral"))
+
 	lit := &ast.FloatLiteral{Token: p.curToken}
 
 	value, err := strconv.ParseFloat(p.curToken.Literal, 64)
@@ -114,7 +95,36 @@ func (p *Parser) parseFloatLiteral() ast.Expression {
 	return lit
 }
 
+func (p *Parser) parseExpression(precedence int) ast.Expression {
+	defer utils.UnTrace(utils.Trace("parseExpression"))
+
+	prefix := p.prefixParseFns[p.curToken.Type]
+
+	if prefix == nil {
+		p.noPrefixParseFnError(p.curToken.Type)
+		return nil
+	}
+
+	leftExp := prefix()
+
+	for !p.peekTokenIs(token.SEMICOLON) && precedence < p.peekPrecedence() {
+		infix := p.infixParseFns[p.peekToken.Type]
+
+		if infix == nil {
+			return nil
+		}
+
+		p.nextToken()
+
+		leftExp = infix(leftExp)
+	}
+
+	return leftExp
+}
+
 func (p *Parser) parsePrefixExpression() ast.Expression {
+	defer utils.UnTrace(utils.Trace("parsePrefixExpression"))
+
 	expression := &ast.PrefixExpression{Token: p.curToken, Operator: p.curToken.Literal}
 
 	p.nextToken()
@@ -125,6 +135,7 @@ func (p *Parser) parsePrefixExpression() ast.Expression {
 }
 
 func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
+	defer utils.UnTrace(utils.Trace("parseInfixExpression"))
 
 	expression := &ast.InfixExpression{
 		Token:    p.curToken,
@@ -132,9 +143,9 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 		Left:     left,
 	}
 
-  precedence := p.curPrecedence()
-  p.nextToken()
-  expression.Right = p.parseExpression(precedence)
+	precedence := p.curPrecedence()
+	p.nextToken()
+	expression.Right = p.parseExpression(precedence)
 
 	return expression
 }
