@@ -127,6 +127,17 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	return leftExp
 }
 
+func (p *Parser) parseGroupedExpression() ast.Expression {
+	p.nextToken()
+
+	exp := p.parseExpression(LOWEST)
+
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+	return exp
+}
+
 func (p *Parser) parsePrefixExpression() ast.Expression {
 	defer utils.UnTrace(utils.Trace("parsePrefixExpression"))
 
