@@ -36,6 +36,7 @@ var precedences = map[token.TokenType]int{
 	token.MINUS:    SUM,
 	token.SLASH:    PRODUCT,
 	token.ASTERISK: PRODUCT,
+	token.LPAREN:   CALL,
 }
 
 func (p *Parser) peekPrecedence() int {
@@ -123,9 +124,9 @@ func (p *Parser) parseFunctionParameters() []*ast.Identifier {
 		identifiers = append(identifiers, ident)
 	}
 
-  if !p.expectPeek(token.RPAREN) {
-    return nil
-  }
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
 
 	return identifiers
 }
@@ -165,6 +166,40 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 		p.nextToken()
 	}
 	return block
+}
+
+func (p *Parser) parseCallArguments() []ast.Expression {
+	defer utils.UnTrace(utils.Trace("parseCallArguments"))
+
+	args := []ast.Expression{}
+
+	if p.peekTokenIs(token.RPAREN) {
+		p.nextToken()
+		return args
+	}
+	p.nextToken()
+
+	args = append(args, p.parseExpression(LOWEST))
+
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+		args = append(args, p.parseExpression(LOWEST))
+	}
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+
+	return args
+}
+
+func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
+	defer utils.UnTrace(utils.Trace("parseCallExpression"))
+
+	exp := &ast.CallExpression{Token: p.curToken, Function: function}
+	exp.Arguments = p.parseCallArguments()
+
+	return exp
 }
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {
