@@ -6,6 +6,7 @@ import (
 	"github.com/cupsadarius/monkey_interpreter/ast"
 	"github.com/cupsadarius/monkey_interpreter/lexer"
 	"github.com/cupsadarius/monkey_interpreter/token"
+	"github.com/cupsadarius/monkey_interpreter/utils"
 )
 
 type Parser struct {
@@ -95,6 +96,8 @@ func (p *Parser) expectPeek(t token.TokenType) bool {
 }
 
 func (p *Parser) parseLetStatement() *ast.LetStatement {
+  defer utils.UnTrace(utils.Trace("parseLetStatement"))
+
 	stmt := &ast.LetStatement{Token: p.curToken}
 
 	if !p.expectPeek(token.IDENT) {
@@ -111,6 +114,7 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 
   stmt.Value = p.parseExpression(LOWEST)
 
+
 	for !p.curTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
@@ -119,6 +123,8 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 }
 
 func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
+  defer utils.UnTrace(utils.Trace("parseReturnStatement"))
+
 	stmt := &ast.ReturnStatement{Token: p.curToken}
 
 	p.nextToken()
@@ -128,6 +134,7 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	for !p.curTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
+
 	return stmt
 }
 
