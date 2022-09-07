@@ -55,13 +55,13 @@ func (p *Parser) curPrecedence() int {
 }
 
 func (p *Parser) parseIdentifier() ast.Expression {
-  defer utils.UnTrace(utils.Trace("parseIdentifier"))
+	defer utils.UnTrace(utils.Trace("parseIdentifier"))
 
 	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 }
 
 func (p *Parser) parseIntegerLiteral() ast.Expression {
-  defer utils.UnTrace(utils.Trace("parseIntegerLiteral"))
+	defer utils.UnTrace(utils.Trace("parseIntegerLiteral"))
 	lit := &ast.IntegerLiteral{Token: p.curToken}
 
 	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
@@ -93,6 +93,11 @@ func (p *Parser) parseFloatLiteral() ast.Expression {
 	lit.Value = value
 
 	return lit
+}
+
+func (p *Parser) parseBooleanLiteral() ast.Expression {
+	defer utils.UnTrace(utils.Trace("parseBooleanLiteral"))
+	return &ast.BooleanLiteral{Token: p.curToken, Value: p.curTokenIs(token.TRUE)}
 }
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {

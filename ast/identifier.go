@@ -14,10 +14,9 @@ func (i *Identifier) TokenLiteral() string {
 }
 
 func (i *Identifier) String() string {
-  return i.Value
+	return i.Value
 }
 
-  
 type IntegerLiteral struct {
 	Token token.Token
 	Value int64
@@ -30,7 +29,7 @@ func (il *IntegerLiteral) TokenLiteral() string {
 }
 
 func (il *IntegerLiteral) String() string {
-  return il.Token.Literal
+	return il.Token.Literal
 }
 
 type FloatLiteral struct {
@@ -45,5 +44,20 @@ func (fl *FloatLiteral) TokenLiteral() string {
 }
 
 func (fl *FloatLiteral) String() string {
-  return fl.Token.Literal
+	return fl.Token.Literal
+}
+
+type BooleanLiteral struct {
+	Token token.Token
+	Value bool
+}
+
+func (b *BooleanLiteral) expressionNode() {}
+
+func (b *BooleanLiteral) TokenLiteral() string {
+	return b.Token.Literal
+}
+
+func (b *BooleanLiteral) String() string {
+	return b.Token.Literal
 }
