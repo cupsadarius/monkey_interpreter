@@ -6,6 +6,7 @@ import (
 )
 
 var traceLevel int = 0
+var tracingEnabled bool = false
 
 const traceIdentPlaceholder string = "\t"
 
@@ -14,7 +15,9 @@ func identLevel() string {
 }
 
 func tracePrint(str string) {
-	fmt.Printf("%s%s\n", identLevel(), str)
+	if tracingEnabled {
+		fmt.Printf("%s%s\n", identLevel(), str)
+	}
 }
 
 func incIdent() { traceLevel = traceLevel + 1 }
