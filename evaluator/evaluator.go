@@ -6,7 +6,7 @@ import (
 )
 
 var (
-  NULL = &object.Null{}
+	NULL  = &object.Null{}
 	TRUE  = &object.Boolean{Value: true}
 	FALSE = &object.Boolean{Value: false}
 )
@@ -19,6 +19,9 @@ func Eval(node ast.Node) object.Object {
 		return evaluateStatements(node.Statements)
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression)
+	case *ast.PrefixExpression:
+		right := Eval(node.Right)
+		return evalPrefixExpression(node.Operator, right)
 
 		// Expressions
 	case *ast.IntegerLiteral:
@@ -26,18 +29,57 @@ func Eval(node ast.Node) object.Object {
 	case *ast.FloatLiteral:
 		return &object.Float{Value: node.Value}
 	case *ast.BooleanLiteral:
-    return nativeToBooleanObject(node.Value)
+		return nativeToBooleanObject(node.Value)
 	}
 
 	return nil
 }
 
-func nativeToBooleanObject(input bool) object.Object {
-  if input {
-    return TRUE
-  }
+func evalPrefixExpression(operator string, right object.Object) object.Object {
+	switch operator {
+	case "!":
+		return evalBangOperatorExpression(right)
+	case "-":
+		return evalMinusPrefixOperatorExpression(right)
+	default:
+		return NULL
+	}
+}
 
-  return FALSE
+func evalMinusPrefixOperatorExpression(right object.Object) object.Object {
+
+	if right.Type() == object.INTEGER_OBJ {
+		value := right.(*object.Integer).Value
+		return &object.Integer{Value: -value}
+	}
+
+	if right.Type() == object.FLOAT_OBJ {
+		value := right.(*object.Float).Value
+		return &object.Float{Value: -value}
+	}
+
+	return NULL
+}
+
+func evalBangOperatorExpression(right object.Object) object.Object {
+	switch right {
+	case TRUE:
+		return FALSE
+	case FALSE:
+		return TRUE
+	case NULL:
+		return TRUE
+	default:
+		return FALSE
+	}
+}
+
+func nativeToBooleanObject(input bool) object.Object {
+	if input {
+		return TRUE
+	}
+
+	return FALSE
 }
 
 func evaluateStatements(statements []ast.Statement) object.Object {
