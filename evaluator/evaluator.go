@@ -1,6 +1,7 @@
 package evaluator
 
 import (
+
 	"github.com/cupsadarius/monkey_interpreter/ast"
 	"github.com/cupsadarius/monkey_interpreter/object"
 )
@@ -22,6 +23,10 @@ func Eval(node ast.Node) object.Object {
 	case *ast.PrefixExpression:
 		right := Eval(node.Right)
 		return evalPrefixExpression(node.Operator, right)
+	case *ast.InfixExpression:
+		right := Eval(node.Right)
+		left := Eval(node.Left)
+		return evalInfixExpression(node.Operator, left, right)
 
 		// Expressions
 	case *ast.IntegerLiteral:
@@ -33,6 +38,68 @@ func Eval(node ast.Node) object.Object {
 	}
 
 	return nil
+}
+
+func evalInfixExpression(operator string, left object.Object, right object.Object) object.Object {
+	switch {
+	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
+		return evalIntegerInfixExpression(operator, left, right)
+	case left.Type() == object.FLOAT_OBJ && right.Type() == object.FLOAT_OBJ:
+		return evalFloatInfixExpression(operator, left, right)
+	case left.Type() == object.INTEGER_OBJ && right.Type() == object.FLOAT_OBJ:
+		casted := object.FloatFromInteger(left)
+		return evalFloatInfixExpression(operator, casted, right)
+	case left.Type() == object.FLOAT_OBJ && right.Type() == object.INTEGER_OBJ:
+		casted := object.FloatFromInteger(right)
+		return evalFloatInfixExpression(operator, left, casted)
+	default:
+		return NULL
+	}
+}
+
+func evalIntegerInfixExpression(operator string, left object.Object, right object.Object) object.Object {
+	leftVal := left.(*object.Integer).Value
+	rightVal := right.(*object.Integer).Value
+
+	switch operator {
+	case "+":
+		return &object.Integer{Value: leftVal + rightVal}
+	case "-":
+		return &object.Integer{Value: leftVal - rightVal}
+	case "/":
+		return &object.Integer{Value: leftVal / rightVal}
+	case "*":
+		return &object.Integer{Value: leftVal * rightVal}
+	default:
+		return NULL
+	}
+}
+
+func evalFloatInfixExpression(operator string, left object.Object, right object.Object) object.Object {
+	leftVal := left.(*object.Float)
+	rightVal := right.(*object.Float)
+
+	switch operator {
+	case "+":
+		result := leftVal.Add(rightVal)
+		val, _ := result.Float64()
+
+		return &object.Float{Value: val}
+	case "-":
+		result := leftVal.Sub(rightVal)
+		val, _ := result.Float64()
+		return &object.Float{Value: val}
+	case "/":
+		result := leftVal.Quo(rightVal)
+		val, _ := result.Float64()
+		return &object.Float{Value: val}
+	case "*":
+		result := leftVal.Mul(rightVal)
+		val, _ := result.Float64()
+		return &object.Float{Value: val}
+	default:
+		return NULL
+	}
 }
 
 func evalPrefixExpression(operator string, right object.Object) object.Object {
