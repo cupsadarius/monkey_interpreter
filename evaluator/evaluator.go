@@ -87,35 +87,26 @@ func evalIntegerInfixExpression(operator string, left object.Object, right objec
 }
 
 func evalFloatInfixExpression(operator string, left object.Object, right object.Object) object.Object {
-	leftVal := left.(*object.Float)
-	rightVal := right.(*object.Float)
+	leftVal := left.(*object.Float).Value
+	rightVal := right.(*object.Float).Value
 
 	switch operator {
 	case "+":
-		result := leftVal.Add(rightVal)
-		val, _ := result.Float64()
-
-		return &object.Float{Value: val}
+		return &object.Float{Value: leftVal + rightVal}
 	case "-":
-		result := leftVal.Sub(rightVal)
-		val, _ := result.Float64()
-		return &object.Float{Value: val}
+		return &object.Float{Value: leftVal - rightVal}
 	case "/":
-		result := leftVal.Quo(rightVal)
-		val, _ := result.Float64()
-		return &object.Float{Value: val}
+		return &object.Float{Value: leftVal / rightVal}
 	case "*":
-		result := leftVal.Mul(rightVal)
-		val, _ := result.Float64()
-		return &object.Float{Value: val}
+		return &object.Float{Value: leftVal * rightVal}
 	case "<":
-		return nativeBoolToBooleanObject(leftVal.Value < rightVal.Value)
+		return nativeBoolToBooleanObject(leftVal < rightVal)
 	case ">":
-		return nativeBoolToBooleanObject(leftVal.Value > rightVal.Value)
+		return nativeBoolToBooleanObject(leftVal > rightVal)
 	case "==":
-		return nativeBoolToBooleanObject(leftVal.Value == rightVal.Value)
+		return nativeBoolToBooleanObject(leftVal == rightVal)
 	case "!=":
-		return nativeBoolToBooleanObject(leftVal.Value != rightVal.Value)
+		return nativeBoolToBooleanObject(leftVal != rightVal)
 	default:
 		return NULL
 	}

@@ -2,7 +2,6 @@ package object
 
 import (
 	"fmt"
-	"math/big"
 )
 
 type ObjectType string
@@ -32,38 +31,6 @@ type Float struct {
 
 func (f *Float) Inspect() string  { return fmt.Sprintf("%f", f.Value) }
 func (f *Float) Type() ObjectType { return FLOAT_OBJ }
-
-func (f *Float) Add(val *Float) big.Rat {
-  a := new(big.Rat).SetFloat64(f.Value)
-  b := new(big.Rat).SetFloat64(val.Value)
-
-  result := new(big.Rat)
-  return *result.Add(a, b)
-}
-
-func (f *Float) Sub(val *Float) big.Rat {
-  a := new(big.Rat).SetFloat64(f.Value)
-  b := new(big.Rat).SetFloat64(val.Value)
-
-  result := new(big.Rat)
-  return *result.Sub(a, b)
-}
-
-func (f *Float) Mul(val *Float) big.Rat {
-  a := new(big.Rat).SetFloat64(f.Value)
-  b := new(big.Rat).SetFloat64(val.Value)
-
-  result := new(big.Rat)
-  return *result.Mul(a, b)
-}
-
-func (f *Float) Quo(val *Float) big.Rat {
-  a := new(big.Rat).SetFloat64(f.Value)
-  b := new(big.Rat).SetFloat64(val.Value)
-
-  result := new(big.Rat)
-  return *result.Quo(a, b)
-}
 
 func FloatFromInteger(obj Object) *Float {
   intVal := obj.(*Integer).Value
