@@ -1,7 +1,6 @@
 package evaluator
 
 import (
-
 	"github.com/cupsadarius/monkey_interpreter/ast"
 	"github.com/cupsadarius/monkey_interpreter/object"
 )
@@ -34,7 +33,7 @@ func Eval(node ast.Node) object.Object {
 	case *ast.FloatLiteral:
 		return &object.Float{Value: node.Value}
 	case *ast.BooleanLiteral:
-		return nativeToBooleanObject(node.Value)
+		return nativeBoolToBooleanObject(node.Value)
 	}
 
 	return nil
@@ -52,6 +51,10 @@ func evalInfixExpression(operator string, left object.Object, right object.Objec
 	case left.Type() == object.FLOAT_OBJ && right.Type() == object.INTEGER_OBJ:
 		casted := object.FloatFromInteger(right)
 		return evalFloatInfixExpression(operator, left, casted)
+	case operator == "==":
+		return nativeBoolToBooleanObject(left == right)
+	case operator == "!=":
+		return nativeBoolToBooleanObject(left != right)
 	default:
 		return NULL
 	}
@@ -70,6 +73,14 @@ func evalIntegerInfixExpression(operator string, left object.Object, right objec
 		return &object.Integer{Value: leftVal / rightVal}
 	case "*":
 		return &object.Integer{Value: leftVal * rightVal}
+	case "<":
+		return nativeBoolToBooleanObject(leftVal < rightVal)
+	case ">":
+		return nativeBoolToBooleanObject(leftVal > rightVal)
+	case "==":
+		return nativeBoolToBooleanObject(leftVal == rightVal)
+	case "!=":
+		return nativeBoolToBooleanObject(leftVal != rightVal)
 	default:
 		return NULL
 	}
@@ -97,6 +108,14 @@ func evalFloatInfixExpression(operator string, left object.Object, right object.
 		result := leftVal.Mul(rightVal)
 		val, _ := result.Float64()
 		return &object.Float{Value: val}
+	case "<":
+		return nativeBoolToBooleanObject(leftVal.Value < rightVal.Value)
+	case ">":
+		return nativeBoolToBooleanObject(leftVal.Value > rightVal.Value)
+	case "==":
+		return nativeBoolToBooleanObject(leftVal.Value == rightVal.Value)
+	case "!=":
+		return nativeBoolToBooleanObject(leftVal.Value != rightVal.Value)
 	default:
 		return NULL
 	}
@@ -141,7 +160,7 @@ func evalBangOperatorExpression(right object.Object) object.Object {
 	}
 }
 
-func nativeToBooleanObject(input bool) object.Object {
+func nativeBoolToBooleanObject(input bool) object.Object {
 	if input {
 		return TRUE
 	}
