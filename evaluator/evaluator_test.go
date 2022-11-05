@@ -201,3 +201,35 @@ func TestIfElseExpressions(t *testing.T) {
 		}
 	}
 }
+
+func TestReturnStatement(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{"return 10;", 10},
+		{"return 1.1;", 1.1},
+		{"return 10; 9;", 10},
+		{"return 2 * 5;", 10},
+		{"return 2 * 5.1;", 10.2},
+		{"9; return 2 * 5; 9;", 10},
+		{`
+      if (10 > 1) {
+        if (10 > 1) {
+          return 10;
+        }
+
+        return 1;
+      }
+    `, 10},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		if v, ok := tt.expected.(int); ok {
+			testIntegerObject(t, evaluated, int64(v))
+		} else if v, ok := tt.expected.(float64); ok {
+			testFloatObject(t, evaluated, float64(v))
+		}
+	}
+}
