@@ -12,11 +12,12 @@ type Object interface {
 }
 
 const (
-	INTEGER_OBJ = "INTEGER"
-	FLOAT_OBJ   = "FLOAT"
-	BOOLEAN_OBJ = "BOOLEAN"
-	NULL_OBJ    = "NULL"
-  RETURN_VALUE_OBJ = "RETURN_VALUE"
+	INTEGER_OBJ      = "INTEGER"
+	FLOAT_OBJ        = "FLOAT"
+	BOOLEAN_OBJ      = "BOOLEAN"
+	NULL_OBJ         = "NULL"
+	RETURN_VALUE_OBJ = "RETURN_VALUE"
+	ERROR_OBJ        = "ERROR"
 )
 
 type Integer struct {
@@ -34,10 +35,9 @@ func (f *Float) Inspect() string  { return fmt.Sprintf("%f", f.Value) }
 func (f *Float) Type() ObjectType { return FLOAT_OBJ }
 
 func FloatFromInteger(obj Object) *Float {
-  intVal := obj.(*Integer).Value
+	intVal := obj.(*Integer).Value
 	return &Float{Value: float64(intVal)}
 }
-
 
 type Boolean struct {
 	Value bool
@@ -51,9 +51,16 @@ type Null struct{}
 func (n *Null) Inspect() string  { return "null" }
 func (n *Null) Type() ObjectType { return NULL_OBJ }
 
-type ReturnValue struct{
-  Value Object
+type ReturnValue struct {
+	Value Object
 }
-  
+
 func (rv *ReturnValue) Inspect() string  { return rv.Value.Inspect() }
 func (rv *ReturnValue) Type() ObjectType { return RETURN_VALUE_OBJ }
+
+type Error struct {
+	Message string
+}
+
+func (e *Error) Inspect() string  { return "ERROR: " + e.Message }
+func (e *Error) Type() ObjectType { return ERROR_OBJ }
