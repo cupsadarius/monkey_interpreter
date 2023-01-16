@@ -12,7 +12,7 @@ func testEval(input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
-  env := object.NewEnvironment()
+	env := object.NewEnvironment()
 
 	return Eval(program, env)
 }
@@ -66,6 +66,29 @@ func testNullObject(t *testing.T, obj object.Object) bool {
 	if obj != NULL {
 		t.Errorf("object is not Null, got=%T (%+v)", obj, obj)
 		return false
+	}
+
+	return true
+}
+
+func testFunctionObject(t *testing.T, obj object.Object, params []string, body string) bool {
+	fn, ok := obj.(*object.Function)
+
+	if !ok {
+		t.Fatalf("object is not Function, got=%T (%+v)", obj, obj)
+	}
+
+	if len(fn.Parameters) != len(params) {
+		t.Fatalf("function has wrong parameters. Parameters=%+v", fn.Parameters)
+	}
+	for index, param := range fn.Parameters {
+		if param.String() != params[index] {
+			t.Fatalf("parameter at %d is not %q. got=%q", index, params[index], param.String())
+		}
+	}
+
+	if fn.Body.String() != body {
+		t.Fatalf("body is not %q. got=%q", body, fn.Body.String())
 	}
 
 	return true
@@ -255,38 +278,38 @@ func TestErrorHandling(t *testing.T) {
         return 1;
       }
       `, "unknown operator: BOOLEAN + BOOLEAN",
-    },
-    {"foobar", "identifier not found: foobar"},
+		},
+		{"foobar", "identifier not found: foobar"},
 	}
 
-  for _, tt := range tests {
-    evaluated := testEval(tt.input)
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
 
-    errObj, ok := evaluated.(*object.Error)
-    if !ok {
-      t.Errorf("no error object returned. got=%T(%+v)", evaluated, evaluated)
-      continue
-    }
-    if errObj.Message != tt.expectedMessage {
-      t.Errorf("wrong error message. expected=%q, got=%q", tt.expectedMessage, errObj.Message)
-    }
-  }
+		errObj, ok := evaluated.(*object.Error)
+		if !ok {
+			t.Errorf("no error object returned. got=%T(%+v)", evaluated, evaluated)
+			continue
+		}
+		if errObj.Message != tt.expectedMessage {
+			t.Errorf("wrong error message. expected=%q, got=%q", tt.expectedMessage, errObj.Message)
+		}
+	}
 }
 
 func TestLetStatements(t *testing.T) {
-  tests := []struct {
-    input string
-    expected interface{}
-  }{
-    {"let a = 5; a;", 5},
-    {"let a = 5 * 5; a;", 25},
-    {"let a = 5; let b = a; b;", 5},
-    {"let a = 5; let b = a; let c = a + b + 5; c;", 15},
-    {"let a = 5.1; a;", 5.1},
-    {"let a = 5 * 5.1; a;", 25.5},
-    {"let a = 5.1; let b = a; b;", 5.1},
-    {"let a = 5; let b = a; let c = a + b + 5.1; c;", 15.1},
-  }
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{"let a = 5; a;", 5},
+		{"let a = 5 * 5; a;", 25},
+		{"let a = 5; let b = a; b;", 5},
+		{"let a = 5; let b = a; let c = a + b + 5; c;", 15},
+		{"let a = 5.1; a;", 5.1},
+		{"let a = 5 * 5.1; a;", 25.5},
+		{"let a = 5.1; let b = a; b;", 5.1},
+		{"let a = 5; let b = a; let c = a + b + 5.1; c;", 15.1},
+	}
 
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
@@ -296,4 +319,50 @@ func TestLetStatements(t *testing.T) {
 			testFloatObject(t, evaluated, float64(v))
 		}
 	}
+}
+
+func TestFunctionStatement(t *testing.T) {
+	input := "fn(x) { x + 2; };"
+	evaluated := testEval(input)
+
+	testFunctionObject(t, evaluated, []string{"x"}, "(x + 2)")
+}
+
+func TestFunctionApplication(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{"let identity = fn(x) { x; }; identity(5);", 5},
+		{"let identity = fn(x) { return x; }; identity(5);", 5},
+		{"let double = fn(x) {x * 2;}; double(5);", 10},
+		{"let add = fn(x, y) {x + y;}; add(5, 5);", 10},
+		{"let add = fn(x, y) {x + y;}; add(5 + 5, add(5, 5));", 20},
+		{"let identity = fn(x) { x; }; identity(5.1);", 5.1},
+		{"let identity = fn(x) { return x; }; identity(5.1);", 5.1},
+		{"let double = fn(x) {x * 2;}; double(5.1);", 10.2},
+		{"let add = fn(x, y) {x + y;}; add(5.1, 5.1);", 10.2},
+		{"let add = fn(x, y) {x + y;}; add(5.1 + 5.1, add(5.1, 5.1));", 20.4},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		if v, ok := tt.expected.(int); ok {
+			testIntegerObject(t, evaluated, int64(v))
+		} else if v, ok := tt.expected.(float64); ok {
+			testFloatObject(t, evaluated, float64(v))
+		}
+	}
+}
+
+func TestClosure(t *testing.T) {
+	input := `
+    let newAdder = fn(x) {
+      fn(y) { x + y; };
+    };
+
+    let addTwo = newAdder(2);
+    addTwo(2);
+  `
+	testIntegerObject(t, testEval(input), 4)
 }
