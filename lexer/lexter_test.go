@@ -192,6 +192,8 @@ func TestComplexSyntax(t *testing.T) {
   10 != 9;
   10 <= 11;
   11 >= 10;
+	"foobar";
+	"foo bar";
   `
 
 	tests := []struct {
@@ -281,7 +283,11 @@ func TestComplexSyntax(t *testing.T) {
 		{token.GT_EQ, ">=", 21, 7},
 		{token.INT, "10", 21, 10},
 		{token.SEMICOLON, ";", 21, 11},
-		{token.EOF, "", 22, 3},
+		{token.STRING, "foobar", 22, 4},
+		{token.SEMICOLON, ";", 22, 10},
+		{token.STRING, "foo bar", 23, 4},
+		{token.SEMICOLON, ";", 23, 11},
+		{token.EOF, "", 24, 3},
 	}
 
 	l := New(input)

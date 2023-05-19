@@ -71,6 +71,21 @@ func testNullObject(t *testing.T, obj object.Object) bool {
 	return true
 }
 
+func testStringObject(t *testing.T, obj object.Object, expected string) bool {
+	result, ok := obj.(*object.String)
+	if !ok {
+		t.Errorf("object is not String, got=%T (%+v)", obj, obj)
+		return false
+	}
+
+	if result.Value != expected {
+		t.Errorf("object has wrong value, got=%s, want=%s", result.Value, expected)
+		return false
+	}
+
+	return true
+}
+
 func testFunctionObject(t *testing.T, obj object.Object, params []string, body string) bool {
 	fn, ok := obj.(*object.Function)
 
@@ -119,6 +134,20 @@ func TestEvalIntegerExpresson(t *testing.T) {
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
 		testIntegerObject(t, evaluated, tt.expected)
+	}
+}
+
+func TestEvalStringExpresson(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{`"hello world"`, "hello world"},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testStringObject(t, evaluated, tt.expected)
 	}
 }
 

@@ -141,6 +141,51 @@ func TestFloatLiteralExpression(t *testing.T) {
 
 }
 
+func testStringLiteral(t *testing.T, fl ast.Expression, value string) bool {
+	ident, ok := fl.(*ast.StringLiteral)
+	if !ok {
+		t.Fatalf("exp is not ast.StringLiteral, got=%T", fl)
+		return false
+	}
+
+	if ident.Value != value {
+		t.Fatalf("ident.Value not %s, got=%s", value, ident.Value)
+		return false
+	}
+
+	if ident.TokenLiteral() != fmt.Sprintf("%s", value) {
+		t.Fatalf("ident.TokenLiteral is not %s, got=%s", value, ident.TokenLiteral())
+		return false
+	}
+
+	return true
+}
+
+func TestStringLiteralExpression(t *testing.T) {
+	input := `"foobar";`
+
+	l := lexer.New(input)
+	p := New(l)
+
+	program := p.ParseProgram()
+
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program does not have enough statements, got=%d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("program,Statements[0] is not an ast.ExpressionStatement, got=%T", program.Statements[0])
+	}
+
+	if !testStringLiteral(t, stmt.Expression, "foobar") {
+		return
+	}
+
+}
+
 func testBooleanLiteral(t *testing.T, exp ast.Expression, value bool) bool {
 	bo, ok := exp.(*ast.BooleanLiteral)
 	if !ok {

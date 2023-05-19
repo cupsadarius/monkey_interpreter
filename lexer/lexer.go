@@ -96,6 +96,19 @@ func (l *Lexer) peakBack() byte {
 	return l.input[l.position-1]
 }
 
+func (l *Lexer) readString() string {
+	position := l.position + 1
+
+	for {
+		l.readChar()
+		if l.ch == '"' || l.ch == 0 {
+			break
+		}
+	}
+
+	return l.input[position:l.position]
+}
+
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 
@@ -170,6 +183,9 @@ func (l *Lexer) NextToken() token.Token {
 		} else {
 			tok = newToken(token.GT, l.ch, l.currentLine, l.currentColumn)
 		}
+	case '"':
+		str := l.readString()
+		tok = token.Token{Type: token.STRING, Literal: str, Line: l.currentLine, Column: l.currentColumn - len(str) + 1}
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF

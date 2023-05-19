@@ -80,20 +80,34 @@ func (fl *FunctionLiteral) TokenLiteral() string {
 }
 
 func (fl *FunctionLiteral) String() string {
-  var out bytes.Buffer
+	var out bytes.Buffer
 
-  params := []string{}
+	params := []string{}
 
-  for _, p := range fl.Parameters {
-    params = append(params, p.String())
-  }
+	for _, p := range fl.Parameters {
+		params = append(params, p.String())
+	}
 
-  out.WriteString(fl.TokenLiteral())
-  out.WriteString("(")
-  out.WriteString(strings.Join(params, ", "))
-  out.WriteString(")")
-  out.WriteString(fl.Body.String())
+	out.WriteString(fl.TokenLiteral())
+	out.WriteString("(")
+	out.WriteString(strings.Join(params, ", "))
+	out.WriteString(")")
+	out.WriteString(fl.Body.String())
 
-  return out.String()
+	return out.String()
 }
 
+type StringLiteral struct {
+	Token token.Token
+	Value string
+}
+
+func (s *StringLiteral) expressionNode() {}
+
+func (s *StringLiteral) TokenLiteral() string {
+	return s.Token.Literal
+}
+
+func (s *StringLiteral) String() string {
+	return s.Token.Literal
+}
