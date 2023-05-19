@@ -143,6 +143,7 @@ func TestEvalStringExpresson(t *testing.T) {
 		expected string
 	}{
 		{`"hello world"`, "hello world"},
+		{`"hello" + " " + "world";`, "hello world"},
 	}
 
 	for _, tt := range tests {
@@ -309,6 +310,7 @@ func TestErrorHandling(t *testing.T) {
       `, "unknown operator: BOOLEAN + BOOLEAN",
 		},
 		{"foobar", "identifier not found: foobar"},
+		{`"a" - "b";`, "unknown operator: STRING - STRING"},
 	}
 
 	for _, tt := range tests {

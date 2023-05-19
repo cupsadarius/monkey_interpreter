@@ -105,6 +105,8 @@ func evalInfixExpression(operator string, left object.Object, right object.Objec
 	case left.Type() == object.FLOAT_OBJ && right.Type() == object.INTEGER_OBJ:
 		casted := object.FloatFromInteger(right)
 		return evalFloatInfixExpression(operator, left, casted)
+	case left.Type() == object.STRING_OBJ && right.Type() == object.STRING_OBJ:
+		return evalInfixStringExpression(operator, left, right)
 	case operator == "==":
 		return nativeBoolToBooleanObject(left == right)
 	case operator == "!=":
@@ -114,6 +116,17 @@ func evalInfixExpression(operator string, left object.Object, right object.Objec
 	default:
 		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
+}
+
+func evalInfixStringExpression(operator string, left object.Object, right object.Object) object.Object {
+
+	if operator == "+" {
+		leftVal := left.(*object.String).Value
+		rightVal := right.(*object.String).Value
+		return &object.String{Value: leftVal + rightVal}
+	}
+
+	return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
 }
 
 func evalIntegerInfixExpression(operator string, left object.Object, right object.Object) object.Object {
